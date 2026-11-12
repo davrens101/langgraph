@@ -92,6 +92,17 @@ def test_topic_accumulate() -> None:
     assert channel.get() == ["a", "b", "b", "c", "d", "d", "e"]
 
 
+def test_topic_accumulate_checkpoint_is_isolated() -> None:
+    channel = Topic(str, accumulate=True).from_checkpoint(MISSING)
+    channel.update(["a", "b"])
+    checkpoint = channel.checkpoint()
+    channel.update(["c"])
+    assert checkpoint == ["a", "b"]
+    restored = Topic(str, accumulate=True).from_checkpoint(checkpoint)
+    restored.update(["d"])
+    assert checkpoint == ["a", "b"]
+
+
 def test_binop() -> None:
     channel = BinaryOperatorAggregate(int, operator.add).from_checkpoint(MISSING)
     assert channel.ValueType is int
